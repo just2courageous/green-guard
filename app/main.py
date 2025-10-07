@@ -11,7 +11,7 @@ app = FastAPI()
 @app.get("/")
 def home():
     # Return JSON response (FastAPI auto-converts dict -> JSON)
-    return {"ok": True, "msg": "Green-Guard demo"}
+    return {"ok": True, "msg": "Green-Guard v2"}
 
 # Define a GET endpoint at "/healthz" used by probes/monitoring
 @app.get("/healthz")
