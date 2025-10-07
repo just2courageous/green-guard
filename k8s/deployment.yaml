@@ -11,7 +11,7 @@ spec:
     metadata:
       labels: { app: green-guard }
       annotations:
-        kubectl.kubernetes.io/restartedAt: "placeholder"
+        kubectl.kubernetes.io/restartedAt: "v3-1"
     spec:
       containers:
         - name: app
