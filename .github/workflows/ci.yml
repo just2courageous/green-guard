@@ -7,43 +7,28 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write          # set to "read" if you remove the rollout commit step
-  packages: write          # push to GHCR
-  id-token: write          # OIDC to assume AWS role (no long-lived keys)
+  contents: write        # commit the rollout stamp back to the repo
+  packages: write        # push to GHCR
+  id-token: write        # OIDC for AWS role
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     env:
-      # Image name for GHCR (owner/green-guard:main)
-      IMAGE_GHCR: ghcr.io/${{ github.repository_owner }}/green-guard:main
-      # ECR repository name
-      ECR_REPOSITORY: green-guard
-      # AWS region for ECR (change if you created ECR elsewhere)
-      AWS_REGION: us-east-2
+      APP_NAME: green-guard
+      GHCR_REPO: ghcr.io/${{ github.repository_owner }}/green-guard
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # needed if we commit back the rollout stamp
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # ---------- Build once ----------
-      - name: Build image (no push yet)
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          push: false
-          tags: ${{ env.IMAGE_GHCR }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # ---------- Push to GHCR ----------
+      # ---- GHCR login (GitHub Container Registry)
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -51,36 +36,33 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Push to GHCR
-        run: docker push "${IMAGE_GHCR}"
-
-      # ---------- Push to AWS ECR (OIDC) ----------
-      # Option A: put your account ID directly in the role ARN below
-      # Option B (preferred): create a repo variable AWS_ACCOUNT_ID and use ${{
-      # vars.AWS_ACCOUNT_ID }} in the role-to-assume line (commented version shown).
+      # ---- AWS creds via OIDC, then ECR login
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::<YOUR-AWS-ACCOUNT-ID>:role/gh-actions-ecr
-          # role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/gh-actions-ecr
-          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::399717050894:role/gh-actions-ecr
+          aws-region: us-east-2
 
       - name: Login to Amazon ECR
         id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Tag & push to ECR
-        env:
-          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}   # <acct>.dkr.ecr.<region>.amazonaws.com
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          # tag from the local image we already built (tagged as IMAGE_GHCR)
-          docker tag green-guard:main "$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG"
-          docker tag green-guard:main "$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest"
-          docker push "$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG"
-          docker push "$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest"
+      # ---- Build ONCE and push to BOTH registries (GHCR + ECR)
+      - name: Build & push (GHCR + ECR)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.GHCR_REPO }}:latest
+            ${{ env.GHCR_REPO }}:${{ github.sha }}
+            ${{ steps.ecr.outputs.registry }}/${{ env.APP_NAME }}:latest
+            ${{ steps.ecr.outputs.registry }}/${{ env.APP_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      # ---------- Optional: force Argo to roll pods by changing an annotation ----------
+      # ---- Make ArgoCD roll pods by changing the annotation
       - name: Stamp rollout with commit SHA
         run: |
           sha="${GITHUB_SHA}"
