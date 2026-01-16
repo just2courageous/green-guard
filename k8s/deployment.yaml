@@ -11,7 +11,7 @@ spec:
     metadata:
       labels: { app: green-guard }
       annotations:
-        kubectl.kubernetes.io/restartedAt: "fa4c23aad328b70dbed0e4d02ca849c5cacbe866"
+        kubectl.kubernetes.io/restartedAt: "5eb4c78d9f6c5db5ac4ae2a90709896ebcb41584"
     spec:
       containers:
         - name: app
