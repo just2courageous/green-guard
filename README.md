@@ -2,6 +2,12 @@
 
 🧑‍💻 **Green-Guard** is a **DevOps [Development and Operations]** demo that provisions **EKS [Elastic Kubernetes Service]** with **Terraform [Infrastructure as Code]**, builds a container with **GitHub Actions [Continuous Integration and Continuous Delivery]**, pushes images to **ECR [Elastic Container Registry]** using **OIDC [OpenID Connect]**, and deploys via **Argo CD [GitOps Continuous Delivery]**.
 
+## ✅ Status
+* **Portfolio ready** ✅
+* Evidence: **included below**
+* Last updated: **2026-01-16**
+
+
 ## 🧠 What this demo shows
 * **Terraform [Infrastructure as Code]** provisioning **VPC [Virtual Private Cloud]** + **EKS [Elastic Kubernetes Service]**
 * **GitHub Actions [Continuous Integration and Continuous Delivery]** building Docker images
@@ -16,12 +22,11 @@
 ![Architecture](docs/diagrams/green-guard-arch.png)
 
 * Diagram (click raw): https://raw.githubusercontent.com/just2courageous/green-guard/main/docs/diagrams/green-guard-arch.png
-* Generator: **[docs/diagrams/arch.py](docs/diagrams/arch.py)**
 
 ---
 
 ## 🎥 Demo video
-* YouTube (video platform): **LINK_HERE**
+* YouTube (video platform): **Planned (coming soon)**
 
 ---
 
